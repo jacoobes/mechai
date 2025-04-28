@@ -1,7 +1,52 @@
 import os
 import argparse
 import re
-
+import subprocess
+classes = [
+  "bad-ac-compressor",
+  "bad-ball-joint",
+  "bad-battery",
+  "bad-bearing-alternator",
+  "bad-belt-tensioner",
+  "bad-cv-joint",
+  "bad-piston",
+  "bad-powersteering-pump",
+  "bad-rubber-bushing",
+  "bad-shocks",
+  "bad-solenoid-starter",
+  "bad-starter",
+  "bad-tie-rod",
+  "bad-upper-lower-swing-arm",
+  "bad-water-pump",
+  "car-stopping-metal-to-metal",
+  "drive-shaft-cv-joint",
+  "engine-moving-failing-tranny",
+  "engine-running-without-oil",
+  "engine-seizing-up",
+  "fan-belt-alternator-belt",
+  "generator-bearing",
+  "hole-in-muffler",
+  "lifter-adjustment",
+  "loose-heat-shield",
+  "obstruction-of-heater-fan",
+  "piston-slapping",
+  "radiator-boiling-water",
+  "running-hole-exhaust",
+  "start-up-car-bad-exhaust",
+  "starter-solenoid",
+  "starting-break-in-exhaust",
+  "struts",
+  "tranny-slipping-engine-revving",
+  "trany-slipping",
+  "trying-to-start-car-with-dead-battery",
+  "upper-lower-swing-arms",
+  "vacuum-hose-leak",
+  "valves-tapping",
+  "wheel-bearing",
+  "wheel-well-dust-cover-breaking-off",
+  "worn-brake-pad",
+  "worn-out-serpentine-belt"
+]
 audio_files = [
     {"src": "https://mycarmakesnoise.com/wp-content/uploads/2021/11/bad-ball-joint-1.mp3", "label": "bad-ball-joint-1"},
     {"src": "https://mycarmakesnoise.com/wp-content/uploads/2021/11/bad-ball-joint-2.mp3", "label": "bad-ball-joint-2"},
@@ -84,6 +129,7 @@ def instadownloader(url):
                     file.write(chunk)   
 
 def youtuberloader(source: str):
+    subprocess.run(['yt-dlp' ], check=True)
     ...
 
 def get_downloaders():
