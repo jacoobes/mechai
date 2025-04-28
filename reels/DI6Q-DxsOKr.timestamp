@@ -1,0 +1,11 @@
+bad-rod-bearings 0:00:00.01-0:00:02.29
+bad-rod-bearings-2 0:00:02.30-0:00:04.16
+bad-rod-bearings-3 0:00:04.17-0:00:05.29
+bad-main-bearings 0:00:06.01-0:00:10.29
+bad-clutch-pressure-plate 0:00:15.26-0:00:20.25
+bad-clutch-pressure-plate-2 0:00:20.26-0:00:26.05
+bad-clutch-release-bearing 0:00:26.05-0:00:32.05
+bad-clutch-release-bearing-2 0:00:34.22-0:00:37.05
+bad-clutch-pilot-bearing 0:00:40.01-0:00:45.29
+bad-synchronizer-ring 0:00:45.30-0:00:55.20
+bad-synchronizer-ring-while-moving-shift-stick 0:00:55.21-0:01:00.05

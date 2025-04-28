@@ -2,51 +2,7 @@ import os
 import argparse
 import re
 import subprocess
-classes = [
-  "bad-ac-compressor",
-  "bad-ball-joint",
-  "bad-battery",
-  "bad-bearing-alternator",
-  "bad-belt-tensioner",
-  "bad-cv-joint",
-  "bad-piston",
-  "bad-powersteering-pump",
-  "bad-rubber-bushing",
-  "bad-shocks",
-  "bad-solenoid-starter",
-  "bad-starter",
-  "bad-tie-rod",
-  "bad-upper-lower-swing-arm",
-  "bad-water-pump",
-  "car-stopping-metal-to-metal",
-  "drive-shaft-cv-joint",
-  "engine-moving-failing-tranny",
-  "engine-running-without-oil",
-  "engine-seizing-up",
-  "fan-belt-alternator-belt",
-  "generator-bearing",
-  "hole-in-muffler",
-  "lifter-adjustment",
-  "loose-heat-shield",
-  "obstruction-of-heater-fan",
-  "piston-slapping",
-  "radiator-boiling-water",
-  "running-hole-exhaust",
-  "start-up-car-bad-exhaust",
-  "starter-solenoid",
-  "starting-break-in-exhaust",
-  "struts",
-  "tranny-slipping-engine-revving",
-  "trany-slipping",
-  "trying-to-start-car-with-dead-battery",
-  "upper-lower-swing-arms",
-  "vacuum-hose-leak",
-  "valves-tapping",
-  "wheel-bearing",
-  "wheel-well-dust-cover-breaking-off",
-  "worn-brake-pad",
-  "worn-out-serpentine-belt"
-]
+
 audio_files = [
     {"src": "https://mycarmakesnoise.com/wp-content/uploads/2021/11/bad-ball-joint-1.mp3", "label": "bad-ball-joint-1"},
     {"src": "https://mycarmakesnoise.com/wp-content/uploads/2021/11/bad-ball-joint-2.mp3", "label": "bad-ball-joint-2"},
@@ -113,24 +69,50 @@ def instadownloader(url):
     L = instaloader.Instaloader()
     reel_shortcode = re.search(r"reel\/(.+)\/", url).group(1)
 
-    if os.path.exists(reel_shortcode+".mp4"):
-        print("insta video already exists")
-        return 
-    post = Post.from_shortcode(L.context, reel_shortcode)
-    url = post.video_url
-    if url is None: 
-        print("No url found, skipping")
-        return 
-    response = requests.get(url, stream=True)
-    if response.status_code == 200:
-        with open(reel_shortcode+".mp4", 'wb') as file:
-            for chunk in response.iter_content(chunk_size=1024):
-                if chunk:
-                    file.write(chunk)   
+    videos = None
+    with open('reels/videos.txt', 'r+') as fr:
+        videos = fr.read().splitlines()
+    
+    with open('reels/videos.txt', 'a+') as fw:
+        if reel_shortcode not in videos:
+            post = Post.from_shortcode(L.context, reel_shortcode)
+            url = post.video_url
+            if url is None: 
+                print("No url found, skipping")
+                return 
+            response = requests.get(url, stream=True)
+            if response.status_code == 200:
+                with open(os.path.join('reels', reel_shortcode+".mp4"), 'wb') as file:
+                    for chunk in response.iter_content(chunk_size=1024):
+                        if chunk:
+                            file.write(chunk)  
+            fw.write(reel_shortcode+"\n") 
+        else: 
+            print("video '{f}' already processed".format(f=id))
+
+ 
 
 def youtuberloader(source: str):
-    subprocess.run(['yt-dlp' ], check=True)
-    ...
+    id = None 
+    # if regular link
+    if 'youtube.com' in source:
+        id = re.search(r'[=|/]([0-9A-Za-z_-]{10}[048AEIMQUYcgkosw])', source).group(1)
+    # if a youtube share link
+    elif 'youtu.be' in source:
+        id = re.search(r'/([0-9A-Za-z_-]{10}[048AEIMQUYcgkosw])\?', source).group(1)
+    else:
+        raise Exception('not a supported url')
+    print(id)
+    videos = None
+    with open('yt/videos.txt', 'r+') as fr:
+        videos = fr.read().splitlines()
+    
+    with open('yt/videos.txt', 'a+') as fw:
+        if id not in videos:
+           subprocess.run(['yt-dlp', source, '-P', 'yt', '-o', '%(id)s' ], check=True)
+           fw.write(id+"\n") 
+        else:
+            print("video '{f}' already processed".format(f=id))
 
 def get_downloaders():
     sources = {
