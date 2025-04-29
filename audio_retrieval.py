@@ -1,15 +1,20 @@
+import torchaudio
+import laion_clap
 
-def embed_audio(path):
-    audio, sr = sf.read(path) 
-    embeds, _timestamps = openl3.get_audio_embedding(
-        audio,
-        sr,
-        input_repr="mel256",
-        content_type='env',
-        embedding_size=512)
+model = CLAP(version='2023', use_cuda=True)  # set use_cuda=True if you have a GPU
 
-    # average embeddings over sliding windows.
-    return embeds.mean(axis=0)
+def embed_audio(wav_path):
+    waveform, sr = torchaudio.load(wav_path)
+    
+    # Convert to 48kHz mono (CLAP expects this)
+    if sr != 48000:
+        waveform = torchaudio.functional.resample(waveform, orig_freq=sr, new_freq=48000)
+    if waveform.shape[0] > 1:
+        waveform = waveform.mean(dim=0, keepdim=True)
+
+    # Get embedding
+    embedding = model.get_audio_embedding_from_data(x=waveform, use_tensor=True)
+    return embedding.detach().cpu().numpy()  # shape: (1, 512)
 
 
 
