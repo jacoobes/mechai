@@ -60,8 +60,9 @@ def slice_audio(input_file, output_dir, segments):
             '-to', end,
             '-vn',  # no video
             '-acodec', 'pcm_s16le',
-            '-ar', '48000',
-            '-ac', '1',
+            '-ar', '48000', #sample rate 48000
+            '-ac', '1',     #monochannel
+            '-filter:a', 'loudnorm' #normalize loudness
             str(out_file)
         ]
         print(f"Extracting '{label}': {start} -> {end} to {out_file}")

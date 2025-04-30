@@ -1,8 +1,6 @@
-from io import BytesIO
-import os
-import time
 from uuid import uuid4
-from flask import Flask, render_template, request, Response, jsonify
+from flask import Flask, render_template, render_template_string, request, Response, jsonify
+from markupsafe import escape
 import openai
 from dotenv import load_dotenv
 import chromadb
@@ -12,7 +10,6 @@ from audio_embed import embed_audio
 
 # Load environment variables
 load_dotenv()
-openai.api_key = os.getenv('OPENAI_API_KEY')
 
 ALLOWED_EXTENSIONS = {'mp3', 'wav', 'ogg'}
 
@@ -32,9 +29,27 @@ prompt = """
 You are an AI Mechanic who is diagnosing car issues by sound and description.
 
 Guidelines:
-1. You must only use the provided audio descriptions to figure out the issue.
+1. You must try to use the provided names of audio clips and the description to figure out the issue.
 2. You must not produce any information that is not in the provided context.
-3. If the provided context does not contain the answer, you should respond with "I am sorry, but I can't answer the question."
+3. If the provided context does not contain the answer, you should respond with the list of similar noises provided in the context
+
+Markdown should be rendered by wrapping it in <md-block> </md-block> tags, instead of a codeblock.
+Good example: 
+<md-block>
+	# Heading
+	* List item 1
+	* List item 2
+</md-block>
+
+Bad example:
+```md
+# Heading
+* List item 1
+* List item 2
+```
+
+
+
 
 You have a machine that can predict similar sounds. You may not get any sounds whatsoever.
 Be aware that some (or even all) audio clip descriptions may not be relevant to the issue:
@@ -73,12 +88,13 @@ def stream():
     # Stream AI responses as Server-Sent Events
     def generate():
         # Call OpenAI ChatCompletion with streaming
-
+        yield f"""data: <p sse-swap="message">thinking.....</p>\n\n"""
         final_content = ""
         try:
             for chunk in openai_chat_creation(user['query'], user['audio']):
                 content = chunk.choices[0].delta.content
                 if content:
+                    content=content.replace("\n", "\ndata:", 1)
                     final_content += content
                     yield f"""data: <p sse-swap="message">{final_content}</p>\n\n"""
             yield f"""event: terminate\ndata: <p hx-target="stream-body">{final_content}</p>\n\n"""

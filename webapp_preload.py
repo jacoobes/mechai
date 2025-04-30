@@ -6,10 +6,11 @@ from flask import json
 import torchaudio
 from transformers.models.clap import ClapFeatureExtractor, ClapProcessor, ClapModel
 import torch
+import random
 
 def load_audio(wav_path, target_sr=48000):
     waveform, sr = torchaudio.load(wav_path)  # returns (channels, samples) tensor
-    print("loading", wav_path, sr)
+    print("loading for embedding:", wav_path, 'sample rate=', sr)
     if waveform.shape[0] != 1:
         raise Exception(wav_path + " must be mono channel")
     return waveform
@@ -28,21 +29,6 @@ def embed_audio(wav_path):
 
     return audio_feats.cpu().numpy().squeeze()
 
-tables = f"""
-CREATE TABLE audio_vectors IF NOT EXISTS (
-    id SERIAL PRIMARY KEY AUTOINCREMENT,
-    vector JSON NOT NULL,
-    name TEXT NOT NULL
-);
-"""
-
-insert_script = """
-    INSERT INTO audio_vectors (vector, name)
-    VALUES (?, ?)
-"""
-
-
-
 
 if __name__ == '__main__':
     # Load the CLAP model and processor
@@ -57,10 +43,16 @@ if __name__ == '__main__':
     collection = chroma_client.create_collection(
         name="documents",
     )
-    should_embed=True
+
+    embeddable_files = [x for x in os.listdir('./dataset') if x.endswith('wav')]
+    embeddable_files = random.sample(embeddable_files, len(embeddable_files))
+    split_index = int(len(embeddable_files) * 0.85)
+    indb = embeddable_files[split_index:]
+    test = embeddable_files[:split_index]
+    
     embed_data = [
         { 'embed': embed_audio(os.path.join('dataset', p)), 'meta': { 'name': Path(p).stem } }
-        for p in os.listdir('./dataset') if p.endswith('wav')
+        for p in indb
     ]
     ids = list([str(x) for x in range(0, len(embed_data))])
     embeds = [ x['embed'] for x in embed_data]
@@ -68,5 +60,9 @@ if __name__ == '__main__':
     
     collection.add(ids=ids, embeddings=embeds, metadatas=metadata)
     
-
+    with open('webapp_testable_sounds.txt', 'w+') as fr:
+        fr.write("\n".join(test))
+        
+    if not os.path.exists('./uploads'):
+        os.mkdir('./uploads')
         
