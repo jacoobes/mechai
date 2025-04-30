@@ -25,8 +25,12 @@ def embed_audio(wav_path):
         audio_feats = model.get_audio_features(**inputs)  # (batch_size=1, 512)
 
     return audio_feats.cpu().numpy().squeeze()
-    
 
+    # 4. Convert to NumPy
+    return audio_feats.cpu().numpy().squeeze()
+
+
+    
 
 import usearch
 import usearch.index
