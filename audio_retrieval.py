@@ -1,11 +1,13 @@
 import os
+from pathlib import Path
 import torchaudio
-from transformers.models.clap import ClapProcessor, ClapModel
+from transformers.models.clap import ClapFeatureExtractor, ClapProcessor, ClapModel
 import torch
 
 # Load the CLAP model and processor
 model_name = "laion/clap-htsat-unfused"
 processor = ClapProcessor.from_pretrained(model_name)
+feature_extractor = ClapFeatureExtractor.from_pretrained(model_name)
 model = ClapModel.from_pretrained(model_name).to("cuda" if torch.cuda.is_available() else "cpu")
 
 def load_audio(wav_path, target_sr=48000):
@@ -19,9 +21,12 @@ def embed_audio(wav_path):
     waveform = load_audio(wav_path)
     # print(waveform.shape)
     # 2. Prepare inputs for CLAP
-    inputs = processor(audios=waveform[0], sampling_rate=48000,  return_tensors="pt")
+    filename = Path(wav_path).stem
+    #inputs = processor(audios=waveform[0], sampling_rate=48000,  return_tensors="pt", padding=True)
+        
 
     with torch.no_grad():
+        inputs = feature_extractor(waveform[0], sampling_rate=48000, return_tensors="pt")
         audio_feats = model.get_audio_features(**inputs)  # (batch_size=1, 512)
 
     return audio_feats.cpu().numpy().squeeze()
@@ -38,7 +43,7 @@ import usearch.index
 index = usearch.index.Index(ndim=512)
 i = 0
 for p in os.listdir('./dataset'):
-    if p != 'bad-piston.wav' and p.endswith('wav'):
+    if  p.endswith('wav'):
         p = os.path.join('dataset', p)
         index.add(i, embed_audio(p))
         print(i, p)
