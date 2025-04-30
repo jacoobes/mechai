@@ -16,7 +16,7 @@ openai.api_key = os.getenv('OPENAI_API_KEY')
 
 ALLOWED_EXTENSIONS = {'mp3', 'wav', 'ogg'}
 
-with open('./key.txt') as fr:
+with open('./key.txt', 'r') as fr:
     api_key = fr.read().strip()
 
 openai_client = openai.OpenAI(api_key=api_key)
