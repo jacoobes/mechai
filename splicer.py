@@ -61,6 +61,7 @@ def slice_audio(input_file, output_dir, segments):
             '-vn',  # no video
             '-acodec', 'pcm_s16le',
             '-ar', '48000',
+            '-ac', '1',
             str(out_file)
         ]
         print(f"Extracting '{label}': {start} -> {end} to {out_file}")

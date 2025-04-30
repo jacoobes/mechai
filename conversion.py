@@ -14,7 +14,7 @@ for x in os.listdir('./dataset'):
                     '-vn',
                     '-acodec', 'pcm_s16le',
                     '-ar', '48000',
-
+                    '-ac', '1',
                     p.replace('mp3', 'wav')
         ]
         subprocess.run(cmd, check=True)

@@ -1,21 +1,47 @@
+import os
 import torchaudio
-import laion_clap
+from transformers.models.clap import ClapProcessor, ClapModel
+import torch
 
-model = CLAP(version='2023', use_cuda=True)  # set use_cuda=True if you have a GPU
+# Load the CLAP model and processor
+model_name = "laion/clap-htsat-unfused"
+processor = ClapProcessor.from_pretrained(model_name)
+model = ClapModel.from_pretrained(model_name).to("cuda" if torch.cuda.is_available() else "cpu")
+
+def load_audio(wav_path, target_sr=48000):
+    waveform, sr = torchaudio.load(wav_path)  # returns (channels, samples) tensor
+    print("loading", wav_path, sr)
+    if waveform.shape[0] != 1:
+        raise Exception(wav_path + " must be mono")
+    return waveform
 
 def embed_audio(wav_path):
-    waveform, sr = torchaudio.load(wav_path)
+    waveform = load_audio(wav_path)
+    # print(waveform.shape)
+    # 2. Prepare inputs for CLAP
+    inputs = processor(audios=waveform[0], sampling_rate=48000,  return_tensors="pt")
+
+    with torch.no_grad():
+        audio_feats = model.get_audio_features(**inputs)  # (batch_size=1, 512)
+
+    return audio_feats.cpu().numpy().squeeze()
     
-    # Convert to 48kHz mono (CLAP expects this)
-    if sr != 48000:
-        waveform = torchaudio.functional.resample(waveform, orig_freq=sr, new_freq=48000)
-    if waveform.shape[0] > 1:
-        waveform = waveform.mean(dim=0, keepdim=True)
-
-    # Get embedding
-    embedding = model.get_audio_embedding_from_data(x=waveform, use_tensor=True)
-    return embedding.detach().cpu().numpy()  # shape: (1, 512)
 
 
+import usearch
+import usearch.index
 
-print(embed_audio('./dataset/struts.wav'))
+index = usearch.index.Index(ndim=512)
+i = 0
+for p in os.listdir('./dataset'):
+    if p != 'bad-piston.wav' and p.endswith('wav'):
+        p = os.path.join('dataset', p)
+        index.add(i, embed_audio(p))
+        print(i, p)
+        i+=1
+
+searchembed = embed_audio('./dataset/bad-piston.wav')
+matches = index.search(searchembed, 10)  # Find 10 nearest neighbors
+
+
+print(matches.to_list())
