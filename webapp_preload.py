@@ -1,27 +1,23 @@
 import os
 from pathlib import Path
-import sqlite3
 import chromadb
-from flask import json
 import torchaudio
 from transformers.models.clap import ClapFeatureExtractor, ClapProcessor, ClapModel
 import torch
 import random
+
+
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') 
 
 def load_audio(wav_path, target_sr=48000):
     waveform, sr = torchaudio.load(wav_path)  # returns (channels, samples) tensor
     print("loading for embedding:", wav_path, 'sample rate=', sr)
     if waveform.shape[0] != 1:
         raise Exception(wav_path + " must be mono channel")
-    return waveform
+    return waveform.to(device)
 
 def embed_audio(wav_path):
     waveform = load_audio(wav_path)
-    # print(waveform.shape)
-    # 2. Prepare inputs for CLAP
-    filename = Path(wav_path).stem
-    #inputs = processor(audios=waveform[0], sampling_rate=48000,  return_tensors="pt", padding=True)
-        
 
     with torch.no_grad():
         inputs = feature_extractor(waveform[0], sampling_rate=48000, return_tensors="pt")
@@ -35,7 +31,7 @@ if __name__ == '__main__':
     model_name = "laion/clap-htsat-unfused"
     processor = ClapProcessor.from_pretrained(model_name)
     feature_extractor = ClapFeatureExtractor.from_pretrained(model_name)
-    model = ClapModel.from_pretrained(model_name).to("cuda" if torch.cuda.is_available() else "cpu")
+    model = ClapModel.from_pretrained(model_name).to(device)
 
 
     # Establish client
@@ -47,8 +43,8 @@ if __name__ == '__main__':
     embeddable_files = [x for x in os.listdir('./dataset') if x.endswith('wav')]
     embeddable_files = random.sample(embeddable_files, len(embeddable_files))
     split_index = int(len(embeddable_files) * 0.85)
-    indb = embeddable_files[split_index:]
-    test = embeddable_files[:split_index]
+    indb = embeddable_files[:split_index]
+    test = embeddable_files[split_index:]
     
     embed_data = [
         { 'embed': embed_audio(os.path.join('dataset', p)), 'meta': { 'name': Path(p).stem } }
@@ -59,7 +55,7 @@ if __name__ == '__main__':
     metadata = [x['meta'] for x in embed_data]
     
     collection.add(ids=ids, embeddings=embeds, metadatas=metadata)
-    
+    print(len(indb), len(test))
     with open('webapp_testable_sounds.txt', 'w+') as fr:
         fr.write("\n".join(test))
         

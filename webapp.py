@@ -48,11 +48,8 @@ Bad example:
 * List item 2
 ```
 
-
-
-
-You have a machine that can predict similar sounds. You may not get any sounds whatsoever.
-Be aware that some (or even all) audio clip descriptions may not be relevant to the issue:
+A machine provided similar sounds, listed by name. It is possible the machine may not capture any sounds.
+Be aware that some (or even all) audio clips may not be relevant to the issue:
 {context}
 
 Here is the description: {description}
@@ -60,7 +57,7 @@ Your response:"""
 
 def select_related_audio(audio):
     embed = embed_audio(audio)
-    query= collection.query(query_embeddings=[embed])
+    query= collection.query(query_embeddings=embed)
     print(query)
     return query
 
@@ -70,7 +67,7 @@ def openai_chat_creation(description, audio):
     yield from openai_client.chat.completions.create( 
         model="o3-mini",
         messages= [
-           { 'role': 'system', 'content': prompt.format(description=description, context={str(topn_audio['metadatas'][0])})}
+           { 'role': 'system', 'content': prompt.format(description=description, context={str(topn_audio['metadatas'])})}
         ],
         stream=True
     )
@@ -133,7 +130,9 @@ def chat():
 
     return f"""
     <div>
+        <h3>You</h3>
         <p class="user">{user_message}</p>
+        <h3>Mechai</h3>
         <p sse-connect="/stream" 
            id="stream-body"
            sse-close="terminate"
