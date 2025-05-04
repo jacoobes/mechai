@@ -5,7 +5,22 @@ import torchaudio
 from transformers.models.clap import ClapFeatureExtractor, ClapProcessor, ClapModel
 import torch
 import random
+import sqlite3
 
+# Connect to (or create) the database
+conn = sqlite3.connect("audio_storage.db")
+cursor = conn.cursor()
+
+# Create the table
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS audio_files (
+    id TEXT PRIMARY KEY,
+    filename TEXT NOT NULL,
+    audio_data BLOB NOT NULL
+)
+""")
+
+conn.commit()
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') 
 
@@ -25,6 +40,10 @@ def embed_audio(wav_path):
 
     return audio_feats.cpu().numpy().squeeze()
 
+def read_blob(x):
+    with open(os.path.join('dataset', x), 'rb') as fr: 
+        audio_blob = fr.read()
+    return audio_blob;
 
 if __name__ == '__main__':
     # Load the CLAP model and processor
@@ -47,10 +66,10 @@ if __name__ == '__main__':
     test = embeddable_files[split_index:]
     
     embed_data = [
-        { 'embed': embed_audio(os.path.join('dataset', p)), 'meta': { 'name': Path(p).stem } }
-        for p in indb
+        { 'id': f'doc_{i}', 'embed': embed_audio(os.path.join('dataset', p)), 'meta': { 'name': Path(p).stem }, 'raw': read_blob(p) }
+        for i,p in enumerate(indb)
     ]
-    ids = list([str(x) for x in range(0, len(embed_data))])
+    ids = [x['id'] for x in embed_data]
     embeds = [ x['embed'] for x in embed_data]
     metadata = [x['meta'] for x in embed_data]
     
@@ -58,7 +77,13 @@ if __name__ == '__main__':
     print(len(indb), len(test))
     with open('webapp_testable_sounds.txt', 'w+') as fr:
         fr.write("\n".join(test))
-        
+
+    for x in embed_data:
+        cursor.execute("INSERT INTO audio_files (id, filename, audio_data) VALUES (?, ?, ?)", 
+            (x['id'], x['meta']['name'], x['raw']))
+        ...
+
     if not os.path.exists('./uploads'):
         os.mkdir('./uploads')
         
+    conn.close()

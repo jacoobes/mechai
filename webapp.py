@@ -5,6 +5,13 @@ import openai
 from dotenv import load_dotenv
 import chromadb
 from audio_embed import embed_audio
+import sqlite3
+
+# Connect to (or create) the database
+conn = sqlite3.connect("audio_storage.db")
+cursor = conn.cursor()
+
+
 
 
 
@@ -29,7 +36,8 @@ prompt = """
 You are an AI Mechanic who is diagnosing car issues by sound and description.
 
 Guidelines:
-1. You must try to use the provided names of audio clips and the description to figure out the issue.
+1. You must try to use the provided names of audio clips and the description to figure out the issue. ALWAYS reference the sound and its name
+   that were used to solve the issue.
 2. You must not produce any information that is not in the provided context.
 3. If the provided context does not contain the answer, you should respond with the list of similar noises provided in the context
 
@@ -52,12 +60,13 @@ A machine provided similar sounds, listed by name. It is possible the machine ma
 Be aware that some (or even all) audio clips may not be relevant to the issue:
 {context}
 
+
 Here is the description: {description}
 Your response:"""
 
 def select_related_audio(audio):
     embed = embed_audio(audio)
-    query= collection.query(query_embeddings=embed)
+    query= collection.query(query_embeddings=embed, n_results=5)
     print(query)
     return query
 
@@ -93,8 +102,9 @@ def stream():
                 if content:
                     content=content.replace("\n", "\ndata:", 1)
                     final_content += content
-                    yield f"""data: <p sse-swap="message">{final_content}</p>\n\n"""
-            yield f"""event: terminate\ndata: <p hx-target="stream-body">{final_content}</p>\n\n"""
+                    yield f"""data: <p sse-swap="message">{final_content}</p><p hx-swap="preterminate"></p>\n\n"""
+            yield f"""event: preterminate\ndata: <p>herro!</p>\n\n"""
+            yield f"""event: terminate\ndata: <p hx-target="stream-body">{final_content}</p><p hx-swap="preterminate"></p>\n\n"""
         except Exception as e:
             print(e)
             yield f"""event: terminate\ndata: <p hx-target="stream-body">{final_content}</p>\n\n"""
@@ -133,12 +143,15 @@ def chat():
         <h3>You</h3>
         <p class="user">{user_message}</p>
         <h3>Mechai</h3>
-        <p sse-connect="/stream" 
+        <div sse-connect="/stream" 
            id="stream-body"
-           sse-close="terminate"
-           sse-swap="message"> </p>
+           sse-close="terminate"> 
+           <p sse-swap="message"> </p>
+        </div>
     </div>
     """
 
 if __name__ == '__main__':
     app.run(debug=True)
+    print("closing\n");
+    conn.close()

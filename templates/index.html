@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Mechanic AI</title>
+        <title>Moogle</title>
         <script type="module" src="https://md-block.verou.me/md-block.js"></script>
         <script 
             src="https://unpkg.com/htmx.org@2.0.4" 
@@ -18,15 +18,50 @@
         <script src="https://unpkg.com/htmx-ext-response-targets@2.0.3" integrity="sha384-T41oglUPvXLGBVyRdZsVRxNWnOOqCynaPubjUVjxhsjFTKrFJGEMm3/0KGmNQ+Pg" crossorigin="anonymous"></script>
         <style>
             body { font-family: Arial, sans-serif; margin: 2rem; }
-            #chat { border: 1px solid #ccc; padding: 1rem; height: 400px; overflow-y: scroll; }
+            #chat { 
+                border: 1px solid #ccc;
+                padding: 1rem;
+                border-radius: 25px;
+                height: 65vh;
+                overflow-y: scroll;
+            }
             .message { margin-bottom: 1rem; }
-            .user { color: blue; }
+            .user { border-radius: 25px; border: 1px solid #ccc; padding: 2em; }
             .ai { color: green; }
+            .submit-message-box {
+                display: flex;
+                flex-grow: 2;
+            }
+
+            #text-input {
+                margin-top: 10px;
+                padding: 1em;
+                border-radius: 25px;
+                min-width:80%;
+            }   
+
+            #audio-input {
+
+                margin-top: 10px;
+                padding: 1em;
+                border-radius: 25px;
+
+            }
+
+            input:focus {
+              outline: none;
+            }
+
+            .submit-button {
+                width:20%;
+                padding: 10px;
+                margin-top: 10px;
+            }
         </style>
 
     </head>
     <body hx-ext="response-targets,sse">
-        <h1>Mechai</h1>
+        <h1>Moogle</h1>
         <div id="chat">
         </div>
         <form id="text-form" 
@@ -36,14 +71,17 @@
               hx-on::after-request="this.reset()"
               hx-swap="beforeend"
               hx-target-error="#form-error">
-            <input type="text" 
-                   name="usermessage"
-                   id="text-input"
-                   placeholder="Type your message..." required/>
-            <input type="file" 
-                   name="caraudio"
-                   id="audio-input"/>
-            <button type="submit">Send</button>
+            <div class="submit-message-box"> 
+                <input type="text" 
+                       name="usermessage"
+                       id="text-input"
+                       placeholder="Type your message..." required/>
+                <input type="file" 
+                       name="caraudio"
+                       id="audio-input"/>
+            </div>
+
+            <button class="submit-button" type="submit">Send</button>
         </form>
         <div id="form-error">
         </div>
