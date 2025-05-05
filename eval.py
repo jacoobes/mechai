@@ -41,7 +41,7 @@ class AnswerSchema(pydantic.BaseModel):
     verdict: bool
 
 
-def evaluate (problem: str): 
+def evaluate (prob: str): 
     solutions = []
     completion = openai_client.chat.completions.create( 
             model='o3-mini',
