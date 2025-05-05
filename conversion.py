@@ -1,12 +1,7 @@
-
 import os
 import subprocess
 
-
-
-
 for x in os.listdir('./dataset'):
-    # ffmpeg -i bad-piston.mp4 bad-piston.mp3 && del bad-piston.mp4       
     if x.endswith('mp3'):
         p = os.path.join('dataset', x)
         cmd = [ 
@@ -19,4 +14,19 @@ for x in os.listdir('./dataset'):
                     p.replace('mp3', 'wav')
         ]
         subprocess.run(cmd, check=True)
-        #os.remove(p)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
