@@ -1,0 +1,7 @@
+<div>
+  {% for link in links %}
+    <audio src="{{ url_for('audio', audio_id=link) }}" type="audio/wav"> 
+                your browser does not support the audio element.
+    </audio>
+  {% endfor %}
+</div>

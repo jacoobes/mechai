@@ -7,6 +7,16 @@ import chromadb
 from audio_embed import embed_audio
 import sqlite3
 
+SERVER_NAME=""
+APPLICATION_ROOT=""
+
+app = Flask(
+    __name__
+)
+app.config['SERVER_NAME']='localhost:5000'
+app.config['PREFERRED_URL_SCHEME'] = 'http'
+app.config['APPLICATION_ROOT'] = '/'
+
 # Connect to (or create) the database
 conn = sqlite3.connect("audio_storage.db")
 cursor = conn.cursor()
@@ -67,12 +77,10 @@ Your response:"""
 def select_related_audio(audio):
     embed = embed_audio(audio)
     query= collection.query(query_embeddings=embed, n_results=5)
-    print(query)
     return query
 
 
-def openai_chat_creation(description, audio):
-    topn_audio = select_related_audio(audio)
+def openai_chat_creation(description, topn_audio):
     yield from openai_client.chat.completions.create( 
         model="o3-mini",
         messages= [
@@ -81,7 +89,6 @@ def openai_chat_creation(description, audio):
         stream=True
     )
 
-app = Flask(__name__)
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
@@ -92,22 +99,26 @@ def index():
 @app.route('/stream', methods=['GET'])
 def stream():
     # Stream AI responses as Server-Sent Events
+
     def generate():
-        # Call OpenAI ChatCompletion with streaming
-        yield f"""data: <p sse-swap="message">thinking.....</p>\n\n"""
-        final_content = ""
-        try:
-            for chunk in openai_chat_creation(user['query'], user['audio']):
-                content = chunk.choices[0].delta.content
-                if content:
-                    content=content.replace("\n", "\ndata:", 1)
-                    final_content += content
-                    yield f"""data: <p sse-swap="message">{final_content}</p><p hx-swap="preterminate"></p>\n\n"""
-            yield f"""event: preterminate\ndata: <p>herro!</p>\n\n"""
-            yield f"""event: terminate\ndata: <p hx-target="stream-body">{final_content}</p><p hx-swap="preterminate"></p>\n\n"""
-        except Exception as e:
-            print(e)
-            yield f"""event: terminate\ndata: <p hx-target="stream-body">{final_content}</p>\n\n"""
+        with app.app_context():
+            # Call OpenAI ChatCompletion with streaming
+            yield f"""data: <p sse-swap="message">thinking.....</p>\n\n"""
+            final_content = ""
+            try:
+                topn_audio = select_related_audio(user['audio'])
+                print(topn_audio)
+                for chunk in openai_chat_creation(user['query'], topn_audio):
+                    content = chunk.choices[0].delta.content
+                    if content:
+                        content=content.replace("\n", "\ndata:", 1)
+                        final_content += content
+                        yield f"""data: <p sse-swap="message">{final_content}</p><p hx-swap="preterminate"></p>\n\n"""
+                yield f"""event: terminate\ndata: <p hx-target="stream-body">{final_content}</p>{render_template('audio_list.html', links=topn_audio['ids'][0])}\n\n"""
+            except Exception as e:
+                import traceback
+                print(traceback.format_exc())
+                yield f"""event: terminate\ndata: <p hx-target="stream-body">{final_content}</p>\n\n"""
 
     return Response(generate(), mimetype='text/event-stream')
 
@@ -151,7 +162,22 @@ def chat():
     </div>
     """
 
-if __name__ == '__main__':
-    app.run(debug=True)
-    print("closing\n");
+def get_audio_file(file_id: str):
+    cursor.execute("SELECT filename, audio_data FROM audio_files WHERE id = ?", (file_id,))
+    result = cursor.fetchone()
     conn.close()
+    return result
+
+@app.route('/audio', methods=['GET'])
+def audio_url():
+    id = request.args.get('audio_id')
+    audio = get_audio_file(file_id=id)    
+    return Response(audio)
+    ...
+
+
+if __name__ == '__main__':
+    with app.app_context():
+        app.run(debug=True)
+        print("closing\n");
+        conn.close()
