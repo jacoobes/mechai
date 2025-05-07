@@ -17,9 +17,6 @@ app.config['SERVER_NAME']='localhost:5000'
 app.config['PREFERRED_URL_SCHEME'] = 'http'
 app.config['APPLICATION_ROOT'] = '/'
 
-# Connect to (or create) the database
-conn = sqlite3.connect("audio_storage.db")
-cursor = conn.cursor()
 
 
 
@@ -113,8 +110,9 @@ def stream():
                     if content:
                         content=content.replace("\n", "\ndata:", 1)
                         final_content += content
-                        yield f"""data: <p sse-swap="message">{final_content}</p><p hx-swap="preterminate"></p>\n\n"""
-                yield f"""event: terminate\ndata: <p hx-target="stream-body">{final_content}</p>{render_template('audio_list.html', links=topn_audio['ids'][0])}\n\n"""
+                        yield f"""data: <p sse-swap="message">{final_content}</p>\n\n"""
+                audio_list_data = [{ 'id': id, **meta } for id, meta in zip(topn_audio['ids'][0], topn_audio['metadatas'][0]) ]
+                yield f"""event: terminate\ndata: <p hx-target="stream-body">{final_content}</p>{render_template('audio_list.html', data=audio_list_data)}\n\n"""
             except Exception as e:
                 import traceback
                 print(traceback.format_exc())
@@ -157,22 +155,25 @@ def chat():
         <div sse-connect="/stream" 
            id="stream-body"
            sse-close="terminate"> 
-           <p sse-swap="message"> </p>
+           <p sse-swap="message,terminate"></p>
         </div>
     </div>
     """
 
 def get_audio_file(file_id: str):
-    cursor.execute("SELECT filename, audio_data FROM audio_files WHERE id = ?", (file_id,))
-    result = cursor.fetchone()
-    conn.close()
-    return result
+    # Connect to (or create) the database
+    with sqlite3.connect("audio_storage.db") as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT filename, audio_data FROM audio_files WHERE id = ?", (file_id,))
+        result = cursor.fetchone()
+        return result[1]
 
 @app.route('/audio', methods=['GET'])
 def audio_url():
     id = request.args.get('audio_id')
+    print(id)
     audio = get_audio_file(file_id=id)    
-    return Response(audio)
+    return Response(audio, mimetype='audio/wav')
     ...
 
 
@@ -180,4 +181,3 @@ if __name__ == '__main__':
     with app.app_context():
         app.run(debug=True)
         print("closing\n");
-        conn.close()

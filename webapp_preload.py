@@ -81,8 +81,9 @@ if __name__ == '__main__':
     for x in embed_data:
         cursor.execute("INSERT INTO audio_files (id, filename, audio_data) VALUES (?, ?, ?)", 
             (x['id'], x['meta']['name'], x['raw']))
+        
         ...
-
+    conn.commit()
     if not os.path.exists('./uploads'):
         os.mkdir('./uploads')
     if not os.path.exists('./static'):
