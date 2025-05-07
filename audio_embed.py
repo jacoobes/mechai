@@ -27,3 +27,9 @@ def embed_audio(wav_path):
         audio_feats = model.get_audio_features(**inputs)  # (batch_size=1, 512)
 
     return audio_feats.cpu().numpy().squeeze()
+
+
+def select_related_audio(collection, audio):
+    embed = embed_audio(audio)
+    query= collection.query(query_embeddings=embed, n_results=5)
+    return query

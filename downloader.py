@@ -2,55 +2,12 @@ import os
 import argparse
 import re
 import subprocess
-
-audio_files = [
-    {"src": "https://mycarmakesnoise.com/wp-content/uploads/2021/11/bad-ball-joint-1.mp3", "label": "bad-ball-joint-1"},
-    {"src": "https://mycarmakesnoise.com/wp-content/uploads/2021/11/bad-ball-joint-2.mp3", "label": "bad-ball-joint-2"},
-    {"src": "https://mycarmakesnoise.com/wp-content/uploads/2021/11/bad-battery.mp3", "label": "bad-battery"},
-    {"src": "https://mycarmakesnoise.com/wp-content/uploads/2021/11/brake-pad.mp3", "label": "brake-pad"},
-    {"src": "https://mycarmakesnoise.com/wp-content/uploads/2021/11/car-stopping-metal-to-metal.mp3", "label": "car-stopping-metal-to-metal"},
-    {"src": "https://mycarmakesnoise.com/wp-content/uploads/2021/11/engine-moving-failing-tranny.mp3", "label": "engine-moving-failing-tranny"},
-    {"src": "https://mycarmakesnoise.com/wp-content/uploads/2021/11/engine-running-without-oil.mp3", "label": "engine-running-without-oil"},
-    {"src": "https://mycarmakesnoise.com/wp-content/uploads/2021/11/engine-seizing-up.mp3", "label": "engine-seizing-up"},
-    {"src": "https://mycarmakesnoise.com/wp-content/uploads/2021/11/failing-water-pump.mp3", "label": "failing-water-pump"},
-    {"src": "https://mycarmakesnoise.com/wp-content/uploads/2021/11/hole-in-muffler.mp3", "label": "hole-in-muffler"},
-    {"src": "https://mycarmakesnoise.com/wp-content/uploads/2021/11/lifter-adjustment.mp3", "label": "lifter-adjustment"},
-    {"src": "https://mycarmakesnoise.com/wp-content/uploads/2021/11/loose-heat-shield.mp3", "label": "loose-heat-shield"},
-    {"src": "https://mycarmakesnoise.com/wp-content/uploads/2021/11/obstruction-of-heater-fan.mp3", "label": "obstruction-of-heater-fan"},
-    {"src": "https://mycarmakesnoise.com/wp-content/uploads/2021/11/piston-slapping.mp3", "label": "piston-slapping"},
-    {"src": "https://mycarmakesnoise.com/wp-content/uploads/2021/11/radiator-boiling-water.mp3", "label": "radiator-boiling-water"},
-    {"src": "https://mycarmakesnoise.com/wp-content/uploads/2021/11/running-hole-exhaust.mp3", "label": "running-hole-exhaust"},
-    {"src": "https://mycarmakesnoise.com/wp-content/uploads/2021/11/start-up-car-bad-exhaust.mp3", "label": "start-up-car-bad-exhaust"},
-    {"src": "https://mycarmakesnoise.com/wp-content/uploads/2021/11/starting-break-in-exhaust.mp3", "label": "starting-break-in-exhaust"},
-    {"src": "https://mycarmakesnoise.com/wp-content/uploads/2021/11/struts.mp3", "label": "struts"},
-    {"src": "https://mycarmakesnoise.com/wp-content/uploads/2021/11/tranny-slipping-engine-reving.mp3", "label": "tranny-slipping-engine-revving"},
-    {"src": "https://mycarmakesnoise.com/wp-content/uploads/2021/11/trany-slipping.mp3", "label": "trany-slipping"},
-    {"src": "https://mycarmakesnoise.com/wp-content/uploads/2021/11/trying-to-start-car-with-dead-battery.mp3", "label": "trying-to-start-car-with-dead-battery"},
-    {"src": "https://mycarmakesnoise.com/wp-content/uploads/2021/11/vacuum-hose-leak.mp3", "label": "vacuum-hose-leak"},
-    {"src": "https://mycarmakesnoise.com/wp-content/uploads/2021/11/valves-tapping.mp3", "label": "valves-tapping"},
-    {"src": "https://mycarmakesnoise.com/wp-content/uploads/2021/11/water-pump.mp3", "label": "water-pump"},
-    {"src": "https://mycarmakesnoise.com/wp-content/uploads/2021/11/wheel-well-dust-cover-breaking-off.mp3", "label": "wheel-well-dust-cover-breaking-off"},
-    {"src": "https://mycarmakesnoise.com/wp-content/uploads/2021/11/worn-out-break-pad.mp3", "label": "worn-out-brake-pad"},
-    {"src": "https://mycarmakesnoise.com/wp-content/uploads/2021/11/worn-out-serpintine-belt.mp3", "label": "worn-out-serpentine-belt"},
-]
-
-
 import instaloader
 from instaloader import Post
 import requests
 from fake_useragent import UserAgent
 
 ua = UserAgent()
-    
-reeldownloads = [
-    "https://www.instagram.com/reel/DFY72xSSW5I/?igsh=N2t2azdnMGJteDBi",
-    "https://www.instagram.com/reel/DEkpcKrumW0/?igsh=b3diNDkzZ2l1cTJu",
-    "https://www.instagram.com/reel/DFdf_xJRG83/?igsh=azVteWtjOXNhZ3B3",
-    "https://www.instagram.com/reel/DHdOWdTCqVI/?igsh=dmY5MzZ2NG12Znhr",
-    "https://www.instagram.com/reel/DHzNMTpM_20/?igsh=MWZxYzg0eXAyM2l4Nw==",
-    "https://www.instagram.com/reel/DH_uyPaMrjH/?igsh=MTQ0OXliN2tqbzR0dg==",
-    "https://www.instagram.com/reel/DIe7rUmsOKg/?igsh=enZycGl2aXQ0dWwz"
-]
 
 
 def cmndownloader(url:str):

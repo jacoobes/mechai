@@ -71,10 +71,7 @@ Be aware that some (or even all) audio clips may not be relevant to the issue:
 Here is the description: {description}
 Your response:"""
 
-def select_related_audio(audio):
-    embed = embed_audio(audio)
-    query= collection.query(query_embeddings=embed, n_results=5)
-    return query
+
 
 
 def openai_chat_creation(description, topn_audio):
@@ -103,7 +100,7 @@ def stream():
             yield f"""data: <p sse-swap="message">thinking.....</p>\n\n"""
             final_content = ""
             try:
-                topn_audio = select_related_audio(user['audio'])
+                topn_audio = select_related_audio(collection,user['audio'])
                 print(topn_audio)
                 for chunk in openai_chat_creation(user['query'], topn_audio):
                     content = chunk.choices[0].delta.content
