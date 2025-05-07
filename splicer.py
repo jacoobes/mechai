@@ -52,7 +52,7 @@ def slice_audio(input_file, output_dir, segments):
     out_dir.mkdir(parents=True, exist_ok=True)
 
     for label, start, end in segments:
-        out_file = out_dir / f"{label}.mp3"
+        out_file = out_dir / f"{label}.wav"
         cmd = [
             'ffmpeg', '-y',
             '-i', str(input_path),
@@ -80,7 +80,7 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--output-dir', default='output_segments',
                         help="Directory to save sliced audio files")
     args = parser.parse_args()
-
+    
     segments = parse_timestamp_file(args.timestamp_file)
     if not segments:
         print("No valid entries found in timestamp file.", file=sys.stderr)

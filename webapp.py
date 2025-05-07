@@ -4,7 +4,7 @@ from markupsafe import escape
 import openai
 from dotenv import load_dotenv
 import chromadb
-from audio_embed import embed_audio
+from audio_embed import embed_audio, select_related_audio
 import sqlite3
 
 SERVER_NAME=""
